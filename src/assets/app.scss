@@ -862,3 +862,171 @@ $shadow-box-padding: 20px;
     }
 }
 
+// PulseGuard Global Modern UI System (Dashboard, Cards, Metrics & Navigation)
+body {
+    background-color: #0b1120 !important;
+    color: #f8fafc !important;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif !important;
+}
+
+// Top Navigation Header
+header {
+    background-color: #0f172a !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 0.85rem 1.5rem !important;
+
+    .title {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        font-size: 1.35rem !important;
+        letter-spacing: -0.3px !important;
+    }
+
+    object[data="/icon.svg"], img[src="/icon.svg"] {
+        filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5));
+    }
+
+    .nav-pills {
+        .nav-link {
+            color: #94a3b8 !important;
+            font-weight: 500 !important;
+            border-radius: 0.65rem !important;
+            padding: 0.5rem 1rem !important;
+            transition: all 0.2s ease !important;
+
+            &:hover {
+                color: #ffffff !important;
+                background-color: rgba(255, 255, 255, 0.05) !important;
+            }
+
+            &.router-link-active, &.active {
+                background-color: rgba(16, 185, 129, 0.15) !important;
+                color: #34d399 !important;
+                border: 1px solid rgba(16, 185, 129, 0.3) !important;
+                font-weight: 600 !important;
+            }
+        }
+    }
+}
+
+// Global Cards & Containers
+.shadow-box {
+    background: rgba(15, 23, 42, 0.8) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 1rem !important;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5) !important;
+    color: #f8fafc !important;
+}
+
+// Metric Stat Cards Architecture
+.metric-card {
+    background: rgba(15, 23, 42, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 1rem !important;
+    padding: 1.25rem 1.5rem !important;
+    text-align: center !important;
+    transition: all 0.25s ease-in-out !important;
+
+    &:hover {
+        transform: translateY(-2px) !important;
+        border-color: rgba(255, 255, 255, 0.18) !important;
+        box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    .metric-label {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        color: #94a3b8 !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .metric-value {
+        font-size: 32px !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+    }
+
+    &.metric-up {
+        border-top: 3px solid #10b981 !important;
+        .text-up { color: #10b981 !important; }
+    }
+
+    &.metric-down {
+        border-top: 3px solid #ef4444 !important;
+        .text-down { color: #ef4444 !important; }
+    }
+
+    &.metric-maintenance {
+        border-top: 3px solid #6366f1 !important;
+        .text-maintenance { color: #818cf8 !important; }
+    }
+
+    &.metric-unknown {
+        border-top: 3px solid #64748b !important;
+        .text-unknown { color: #94a3b8 !important; }
+    }
+
+    &.metric-pause {
+        border-top: 3px solid #f59e0b !important;
+        .text-pause { color: #fbbf24 !important; }
+    }
+}
+
+// Add New Monitor Button
+.btn-primary, button.btn-primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+    border-radius: 0.75rem !important;
+    font-weight: 600 !important;
+    padding: 0.6rem 1.2rem !important;
+
+    &:hover {
+        background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5) !important;
+    }
+}
+
+// Tables & Event Log
+.table {
+    color: #cbd5e1 !important;
+
+    th {
+        color: #94a3b8 !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+        vertical-align: middle !important;
+    }
+
+    tr:hover td {
+        background-color: rgba(255, 255, 255, 0.03) !important;
+    }
+}
+
+// Monitor List Sidebar
+.monitor-list {
+    .item {
+        border-radius: 0.75rem !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        margin-bottom: 0.5rem !important;
+
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.04) !important;
+        }
+
+        &.active {
+            background-color: rgba(16, 185, 129, 0.1) !important;
+            border-color: rgba(16, 185, 129, 0.3) !important;
+        }
+    }
+}
+

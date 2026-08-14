@@ -5,33 +5,45 @@
                 {{ $t("Quick Stats") }}
             </h1>
 
-            <div class="shadow-box big-padding text-center mb-3">
-                <div class="row">
-                    <div class="col">
-                        <h3>{{ $t("Up") }}</h3>
-                        <span class="num" :class="$root.stats.up === 0 && 'text-secondary'">
+            <div class="row g-3 mb-4">
+                <div class="col">
+                    <div class="metric-card metric-up">
+                        <div class="metric-label">{{ $t("Up") }}</div>
+                        <div class="metric-value num text-up">
                             {{ $root.stats.up }}
-                        </span>
+                        </div>
                     </div>
-                    <div class="col">
-                        <h3>{{ $t("Down") }}</h3>
-                        <span class="num" :class="$root.stats.down > 0 ? 'text-danger' : 'text-secondary'">
+                </div>
+                <div class="col">
+                    <div class="metric-card metric-down">
+                        <div class="metric-label">{{ $t("Down") }}</div>
+                        <div class="metric-value num text-down">
                             {{ $root.stats.down }}
-                        </span>
+                        </div>
                     </div>
-                    <div class="col">
-                        <h3>{{ $t("Maintenance") }}</h3>
-                        <span class="num" :class="$root.stats.maintenance > 0 ? 'text-maintenance' : 'text-secondary'">
+                </div>
+                <div class="col">
+                    <div class="metric-card metric-maintenance">
+                        <div class="metric-label">{{ $t("Maintenance") }}</div>
+                        <div class="metric-value num text-maintenance">
                             {{ $root.stats.maintenance }}
-                        </span>
+                        </div>
                     </div>
-                    <div class="col">
-                        <h3>{{ $t("Unknown") }}</h3>
-                        <span class="num text-secondary">{{ $root.stats.unknown }}</span>
+                </div>
+                <div class="col">
+                    <div class="metric-card metric-unknown">
+                        <div class="metric-label">{{ $t("Unknown") }}</div>
+                        <div class="metric-value num text-unknown">
+                            {{ $root.stats.unknown }}
+                        </div>
                     </div>
-                    <div class="col">
-                        <h3>{{ $t("pauseDashboardHome") }}</h3>
-                        <span class="num text-secondary">{{ $root.stats.pause }}</span>
+                </div>
+                <div class="col">
+                    <div class="metric-card metric-pause">
+                        <div class="metric-label">{{ $t("pauseDashboardHome") }}</div>
+                        <div class="metric-value num text-pause">
+                            {{ $root.stats.pause }}
+                        </div>
                     </div>
                 </div>
             </div>
