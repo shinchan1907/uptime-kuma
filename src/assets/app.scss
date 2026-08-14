@@ -674,3 +674,79 @@ $shadow-box-padding: 20px;
 // Localization
 
 @import "localization.scss";
+
+// PulseGuard Modern UI Overhaul
+.btn-primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease-in-out !important;
+    
+    &:hover {
+        background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45) !important;
+    }
+
+    &:focus, &:active {
+        box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.5) !important;
+    }
+}
+
+.btn-outline-primary {
+    color: #10b981 !important;
+    border-color: #10b981 !important;
+    font-weight: 600 !important;
+
+    &:hover, &.active, &:checked + label {
+        background-color: #10b981 !important;
+        border-color: #10b981 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+    }
+}
+
+.form-control, .form-select {
+    border-radius: 0.75rem !important;
+    border: 1.5px solid #cbd5e1 !important;
+    transition: all 0.2s ease !important;
+
+    &:focus {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.2) !important;
+    }
+
+    .dark & {
+        border-color: #334155 !important;
+        background-color: #0f172a !important;
+        color: #f1f5f9 !important;
+
+        &:focus {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.3) !important;
+        }
+    }
+}
+
+.form-container {
+    background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0f172a 70%, #090d16 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f8fafc;
+    padding: 2rem 1rem;
+
+    .form {
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(51, 65, 85, 0.7);
+        border-radius: 1.5rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        padding: 2.5rem;
+        max-width: 460px;
+        width: 100%;
+    }
+}
+

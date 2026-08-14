@@ -1,9 +1,14 @@
 services:
-  uptime-kuma:
-    image: louislam/uptime-kuma:2
+  pulseguard:
+    build:
+      context: .
+      dockerfile: docker/dockerfile
+      target: release
+    image: pulseguard:latest
+    container_name: pulseguard
     restart: unless-stopped
     volumes:
       - ./data:/app/data
     ports:
-      # <Host Port>:<Container Port>
       - "3001:3001"
+
