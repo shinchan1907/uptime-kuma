@@ -183,22 +183,18 @@ optgroup {
 }
 
 .btn-outline-normal {
-    padding: 4px 10px;
-    border: 1px solid #ced4da;
+    padding: 6px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
     border-radius: 25px;
-    background-color: transparent;
+    background-color: rgba(30, 41, 59, 0.6) !important;
+    color: #cbd5e1 !important;
+    font-weight: 500;
+    transition: all 0.2s ease;
 
-    .dark & {
-        color: $dark-font-color;
-        border: 1px solid $dark-font-color2;
-    }
-
-    &.active {
-        background-color: $highlight-white;
-
-        .dark & {
-            background-color: $dark-font-color2;
-        }
+    &:hover, &:focus, &.active, &.open {
+        border-color: #10b981 !important;
+        background-color: rgba(16, 185, 129, 0.15) !important;
+        color: #34d399 !important;
     }
 }
 

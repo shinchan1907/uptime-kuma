@@ -52,7 +52,7 @@ export default {
 .filter-dropdown-menu {
     z-index: 100;
     transition: all 0.2s;
-    padding: 5px 0 !important;
+    padding: 8px 0 !important;
     border-radius: 16px;
     overflow: hidden;
 
@@ -60,12 +60,14 @@ export default {
     inset: 0 auto auto 0;
     margin: 0;
     transform: translate(0, 36px);
-    box-shadow: 0 15px 70px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
     visibility: hidden;
     list-style: none;
     height: 0;
     opacity: 0;
-    background: white;
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
 
     &.open {
         height: unset;
@@ -74,67 +76,42 @@ export default {
     }
 
     .dropdown-item {
-        padding: 5px 15px;
-    }
+        padding: 8px 16px;
+        color: #cbd5e1 !important;
+        font-weight: 500;
+        cursor: pointer;
 
-    .dropdown-item:focus {
-        background: $highlight-white;
-
-        .dark & {
-            background: $dark-bg2;
+        &:hover, &:focus {
+            background-color: rgba(255, 255, 255, 0.08) !important;
+            color: #ffffff !important;
         }
-    }
 
-    .dark & {
-        background-color: $dark-bg;
-        color: $dark-font-color;
-        border-color: $dark-border-color;
-
-        .dropdown-item {
-            color: $dark-font-color;
-
-            &.active {
-                color: $dark-font-color2;
-                background-color: $highlight !important;
-            }
-
-            &:hover {
-                background-color: $dark-bg2;
-            }
+        &.active {
+            color: #34d399 !important;
+            background-color: rgba(16, 185, 129, 0.15) !important;
         }
     }
 }
 
 .filter-dropdown-status {
-    @extend .btn-outline-normal;
     display: flex;
     align-items: center;
-    margin-left: 0;
-    color: $link-color;
+    padding: 6px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 25px;
+    background-color: rgba(30, 41, 59, 0.6) !important;
+    color: #cbd5e1 !important;
+    font-weight: 500;
+    transition: all 0.2s ease;
 
-    .dark & {
-        color: $dark-font-color;
-    }
-
-    &:focus {
-        background-color: $highlight-white;
-
-        .dark & {
-            background-color: $dark-font-color2;
-        }
-    }
-
-    &.active {
-        border: 1px solid $highlight;
-        background-color: $highlight-white;
-
-        .dark & {
-            background-color: $dark-font-color2;
-        }
+    &:hover, &:focus, &.active, &.open {
+        border-color: #10b981 !important;
+        background-color: rgba(16, 185, 129, 0.15) !important;
+        color: #34d399 !important;
     }
 }
 
 .filter-active {
-    color: $highlight;
+    color: #34d399;
 }
 </style>
