@@ -1047,4 +1047,84 @@ header {
     }
 }
 
+// System-Wide Input & Control Uniformity (Form Controls, Input Groups, Labels & Code Badges)
+.form-control, 
+.form-select, 
+textarea.form-control {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 0.75rem;
+
+    &:focus {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.2) !important;
+    }
+}
+
+.input-group {
+    .input-group-text {
+        background-color: #0f172a !important;
+        color: #94a3b8 !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    }
+    
+    .btn, .btn-outline-primary, .btn-outline-secondary {
+        background-color: #1e293b !important;
+        color: #34d399 !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+
+        &:hover {
+            background-color: rgba(16, 185, 129, 0.15) !important;
+            border-color: #10b981 !important;
+            color: #34d399 !important;
+        }
+    }
+}
+
+// System Labels, Muted Help Text & Subtext Contrast
+label, .form-label, h1, h2, h3, h4, h5, h6 {
+    color: #f8fafc !important;
+}
+
+.form-text, .text-muted, p, ul, li, .form-check-label {
+    color: #94a3b8;
+
+    a {
+        color: #34d399 !important;
+        text-decoration: underline;
+
+        &:hover {
+            color: #6ee7b7 !important;
+        }
+    }
+}
+
+// Inline Code Snippets & Tags (e.g., a-z 0-9 -, default)
+code, kbd, var, samp {
+    background-color: #1e293b !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 0.375rem !important;
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.875em !important;
+}
+
+// Radio & Checkbox Controls
+.form-check-input {
+    background-color: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+
+    &:checked {
+        background-color: #10b981 !important;
+        border-color: #10b981 !important;
+    }
+
+    &:focus {
+        box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.25) !important;
+    }
+}
+
 
