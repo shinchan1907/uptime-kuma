@@ -1196,4 +1196,48 @@ code, kbd, var, samp {
     }
 }
 
+// Button Toggle Groups (Theme, Heartbeat Bar, Elapsed Time)
+.btn-group {
+    border-radius: 0.75rem !important;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background-color: #0f172a !important;
+
+    .btn-check {
+        position: absolute;
+        clip: rect(0, 0, 0, 0);
+        pointer-events: none;
+    }
+
+    .btn-outline-primary, .btn-outline-secondary, label.btn {
+        background-color: #0f172a !important;
+        color: #cbd5e1 !important;
+        border: none !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding: 0.55rem 1.25rem !important;
+        font-weight: 500 !important;
+        font-size: 14px !important;
+        transition: all 0.2s ease !important;
+        border-radius: 0 !important;
+
+        &:last-of-type, &:last-child {
+            border-right: none !important;
+        }
+
+        &:hover {
+            color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+    }
+
+    .btn-check:checked + label.btn,
+    .btn-check:checked + .btn-outline-primary,
+    .btn-check:checked + .btn-outline-secondary {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+    }
+}
+
 
