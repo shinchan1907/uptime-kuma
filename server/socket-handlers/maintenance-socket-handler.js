@@ -7,6 +7,24 @@ const Maintenance = require("../model/maintenance");
 const server = UptimeKumaServer.getInstance();
 
 /**
+ * Ensure the socket's user owns the given maintenance window. Platform admins
+ * bypass the check. Prevents one tenant from modifying another tenant's
+ * maintenance-to-monitor / maintenance-to-status-page associations.
+ * @param {Socket} socket The authenticated socket.
+ * @param {number} maintenanceID The maintenance id.
+ * @returns {Promise<void>}
+ * @throws {Error} If not found or not owned.
+ */
+async function assertOwnsMaintenance(socket, maintenanceID) {
+    const bean = (socket.userRole === "admin")
+        ? await R.findOne("maintenance", " id = ? ", [ maintenanceID ])
+        : await R.findOne("maintenance", " id = ? AND user_id = ? ", [ maintenanceID, socket.userID ]);
+    if (!bean) {
+        throw new Error("Maintenance not found or access denied");
+    }
+}
+
+/**
  * Handlers for Maintenance
  * @param {Socket} socket Socket.io instance
  * @returns {void}
@@ -77,6 +95,7 @@ module.exports.maintenanceSocketHandler = (socket) => {
     socket.on("addMonitorMaintenance", async (maintenanceID, monitors, callback) => {
         try {
             checkLogin(socket);
+            await assertOwnsMaintenance(socket, maintenanceID);
 
             await R.exec("DELETE FROM monitor_maintenance WHERE maintenance_id = ?", [maintenanceID]);
 
@@ -109,6 +128,7 @@ module.exports.maintenanceSocketHandler = (socket) => {
     socket.on("addMaintenanceStatusPage", async (maintenanceID, statusPages, callback) => {
         try {
             checkLogin(socket);
+            await assertOwnsMaintenance(socket, maintenanceID);
 
             await R.exec("DELETE FROM maintenance_status_page WHERE maintenance_id = ?", [maintenanceID]);
 

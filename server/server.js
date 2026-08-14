@@ -1250,6 +1250,7 @@ let needSetup = false;
         socket.on("getMonitorBeats", async (monitorID, period, callback) => {
             try {
                 checkLogin(socket);
+                await assertOwnsMonitor(socket, monitorID);
 
                 log.info("monitor", `Get Monitor Beats: ${monitorID} User ID: ${socket.userID}`);
 
@@ -1459,7 +1460,10 @@ let needSetup = false;
             try {
                 checkLogin(socket);
 
-                let bean = await R.findOne("tag", " id = ? ", [tag.id]);
+                // Only the owning tenant (or an admin) may edit a tag.
+                let bean = (socket.userRole === "admin")
+                    ? await R.findOne("tag", " id = ? ", [ tag.id ])
+                    : await R.findOne("tag", " id = ? AND user_id = ? ", [ tag.id, socket.userID ]);
                 if (bean == null) {
                     callback({
                         ok: false,
@@ -1490,7 +1494,12 @@ let needSetup = false;
             try {
                 checkLogin(socket);
 
-                await R.exec("DELETE FROM tag WHERE id = ? ", [tagID]);
+                // Only the owning tenant (or an admin) may delete a tag.
+                if (socket.userRole === "admin") {
+                    await R.exec("DELETE FROM tag WHERE id = ? ", [ tagID ]);
+                } else {
+                    await R.exec("DELETE FROM tag WHERE id = ? AND user_id = ? ", [ tagID, socket.userID ]);
+                }
 
                 callback({
                     ok: true,
@@ -1508,6 +1517,7 @@ let needSetup = false;
         socket.on("addMonitorTag", async (tagID, monitorID, value, callback) => {
             try {
                 checkLogin(socket);
+                await assertOwnsMonitorAndTag(socket, monitorID, tagID);
 
                 await R.exec("INSERT INTO monitor_tag (tag_id, monitor_id, value) VALUES (?, ?, ?)", [
                     tagID,
@@ -1533,6 +1543,7 @@ let needSetup = false;
         socket.on("editMonitorTag", async (tagID, monitorID, value, callback) => {
             try {
                 checkLogin(socket);
+                await assertOwnsMonitorAndTag(socket, monitorID, tagID);
 
                 await R.exec("UPDATE monitor_tag SET value = ? WHERE tag_id = ? AND monitor_id = ?", [
                     value,
@@ -1558,6 +1569,7 @@ let needSetup = false;
         socket.on("deleteMonitorTag", async (tagID, monitorID, value, callback) => {
             try {
                 checkLogin(socket);
+                await assertOwnsMonitorAndTag(socket, monitorID, tagID);
 
                 await R.exec("DELETE FROM monitor_tag WHERE tag_id = ? AND monitor_id = ? AND value = ?", [
                     tagID,
@@ -1586,8 +1598,19 @@ let needSetup = false;
 
                 let count;
                 if (monitorID == null) {
-                    count = await R.count("heartbeat", "important = 1");
+                    // "All monitors" means all of the current tenant's monitors
+                    // (or truly all, for a platform admin).
+                    if (socket.userRole === "admin") {
+                        count = await R.count("heartbeat", "important = 1");
+                    } else {
+                        count = await R.count(
+                            "heartbeat",
+                            "important = 1 AND monitor_id IN (SELECT id FROM monitor WHERE user_id = ?)",
+                            [socket.userID]
+                        );
+                    }
                 } else {
+                    await assertOwnsMonitor(socket, monitorID);
                     count = await R.count("heartbeat", "monitor_id = ? AND important = 1", [monitorID]);
                 }
 
@@ -1609,17 +1632,34 @@ let needSetup = false;
 
                 let list;
                 if (monitorID == null) {
-                    list = await R.find(
-                        "heartbeat",
-                        `
-                        important = 1
-                        ORDER BY time DESC
-                        LIMIT ?
-                        OFFSET ?
-                    `,
-                        [count, offset]
-                    );
+                    // "All monitors" is scoped to the current tenant's monitors
+                    // (or truly all, for a platform admin).
+                    if (socket.userRole === "admin") {
+                        list = await R.find(
+                            "heartbeat",
+                            `
+                            important = 1
+                            ORDER BY time DESC
+                            LIMIT ?
+                            OFFSET ?
+                        `,
+                            [count, offset]
+                        );
+                    } else {
+                        list = await R.find(
+                            "heartbeat",
+                            `
+                            important = 1
+                            AND monitor_id IN (SELECT id FROM monitor WHERE user_id = ?)
+                            ORDER BY time DESC
+                            LIMIT ?
+                            OFFSET ?
+                        `,
+                            [socket.userID, count, offset]
+                        );
+                    }
                 } else {
+                    await assertOwnsMonitor(socket, monitorID);
                     list = await R.find(
                         "heartbeat",
                         `
@@ -1680,6 +1720,8 @@ let needSetup = false;
         socket.on("getSettings", async (callback) => {
             try {
                 checkLogin(socket);
+                // Server-wide settings are admin-only in the multi-tenant SaaS.
+                checkAdmin(socket);
                 const data = await getSettings("general");
 
                 if (!data.serverTimezone) {
@@ -1701,6 +1743,8 @@ let needSetup = false;
         socket.on("setSettings", async (data, currentPassword, callback) => {
             try {
                 checkLogin(socket);
+                // Server-wide settings are admin-only in the multi-tenant SaaS.
+                checkAdmin(socket);
 
                 // If currently is disabled auth, don't need to check
                 // Disabled Auth + Want to Disable Auth => No Check
@@ -2027,6 +2071,56 @@ async function checkOwner(userID, monitorID) {
  * @param {object} user User object
  * @returns {Promise<void>}
  */
+/**
+ * Ensure the socket's user is a platform administrator. Used to protect
+ * server-wide configuration from normal tenants in the multi-tenant SaaS.
+ * @param {Socket} socket The authenticated socket.
+ * @returns {void}
+ * @throws {Error} If the user is not an admin.
+ */
+function checkAdmin(socket) {
+    if (socket.userRole !== "admin") {
+        throw new Error("Only a platform administrator can perform this action");
+    }
+}
+
+/**
+ * Ensure the socket's user owns the given monitor. Platform admins bypass.
+ * @param {Socket} socket The authenticated socket.
+ * @param {number} monitorID The monitor id.
+ * @returns {Promise<void>}
+ * @throws {Error} If the user does not own the monitor.
+ */
+async function assertOwnsMonitor(socket, monitorID) {
+    if (socket.userRole === "admin") {
+        return;
+    }
+    const monitor = await R.findOne("monitor", " id = ? AND user_id = ? ", [ monitorID, socket.userID ]);
+    if (!monitor) {
+        throw new Error("Access denied");
+    }
+}
+
+/**
+ * Ensure the socket's user owns both the monitor and the tag before allowing a
+ * monitor-tag association change. Platform admins bypass the check.
+ * @param {Socket} socket The authenticated socket.
+ * @param {number} monitorID The monitor being tagged.
+ * @param {number} tagID The tag being applied.
+ * @returns {Promise<void>}
+ * @throws {Error} If the user does not own both the monitor and the tag.
+ */
+async function assertOwnsMonitorAndTag(socket, monitorID, tagID) {
+    if (socket.userRole === "admin") {
+        return;
+    }
+    const monitor = await R.findOne("monitor", " id = ? AND user_id = ? ", [ monitorID, socket.userID ]);
+    const tag = await R.findOne("tag", " id = ? AND user_id = ? ", [ tagID, socket.userID ]);
+    if (!monitor || !tag) {
+        throw new Error("Access denied");
+    }
+}
+
 async function afterLogin(socket, user) {
     socket.userID = user.id;
     // Platform role: "admin" sees everything, "user" is a normal tenant.
