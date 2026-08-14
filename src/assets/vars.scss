@@ -1,20 +1,21 @@
-$primary: #10b981;
+// PulseGuard brand palette (matches logo: navy shield + emerald/teal pulse)
+$primary: #12b981;
 $danger: #ef4444;
 $warning: #f59e0b;
 $maintenance: #6366f1;
-$link-color: #0f172a;
+$link-color: #0e1b26;
 $border-radius: 0.75rem;
-$secondary-text: #64748b;
+$secondary-text: #53637a;
 
-$highlight: #34d399;
-$highlight-white: rgba(16, 185, 129, 0.15);
+$highlight: #3fd98a;
+$highlight-white: rgba(63, 217, 138, 0.15);
 
-$dark-font-color: #cbd5e1;
-$dark-font-color2: #0f172a;
-$dark-bg: #0f172a;
-$dark-bg2: #090d16;
-$dark-border-color: #1e293b;
-$dark-header-bg: #1e293b;
+$dark-font-color: #dbe6e1;
+$dark-font-color2: #0e1b26;
+$dark-bg: #0a141f;
+$dark-bg2: #06101a;
+$dark-border-color: #16293a;
+$dark-header-bg: #0f2130;
 
 $easing-in: cubic-bezier(0.54, 0.78, 0.55, 0.97);
 $easing-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);

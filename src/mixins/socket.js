@@ -438,6 +438,74 @@ export default {
         },
 
         /**
+         * Apply a successful auth response: persist token and mark the app as
+         * logged in. Shared by password login and the email/OTP flows.
+         * @param {object} res Response object containing a JWT token
+         * @returns {void}
+         */
+        applyLoginSuccess(res) {
+            this.storage().token = res.token;
+            this.socket.token = res.token;
+            this.loggedIn = true;
+            this.username = this.getJWTPayload()?.username;
+            // Trigger Chrome Save Password / keep history clean
+            history.pushState({}, "");
+        },
+
+        /**
+         * Request a one-time code to register a new account with an email.
+         * @param {string} email Email address to register
+         * @param {loginCB} callback Callback with the server response
+         * @returns {void}
+         */
+        registerRequestOTP(email, callback) {
+            socket.emit("registerRequestOTP", { email }, callback);
+        },
+
+        /**
+         * Verify a registration code and create + log in the account.
+         * @param {string} email Email address being registered
+         * @param {string} code The one-time code from the email
+         * @param {loginCB} callback Callback with the server response
+         * @returns {void}
+         */
+        registerVerifyOTP(email, code, callback) {
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            socket.emit("registerVerifyOTP", { email, code, timezone }, (res) => {
+                if (res.ok) {
+                    this.applyLoginSuccess(res);
+                }
+                callback(res);
+            });
+        },
+
+        /**
+         * Request a one-time sign-in code for an existing account.
+         * @param {string} email Email address to sign in with
+         * @param {loginCB} callback Callback with the server response
+         * @returns {void}
+         */
+        loginRequestOTP(email, callback) {
+            socket.emit("loginRequestOTP", { email }, callback);
+        },
+
+        /**
+         * Verify a sign-in code and log in.
+         * @param {string} email Email address being signed in
+         * @param {string} code The one-time code from the email
+         * @param {loginCB} callback Callback with the server response
+         * @returns {void}
+         */
+        loginVerifyOTP(email, code, callback) {
+            socket.emit("loginVerifyOTP", { email, code }, (res) => {
+                if (res.ok) {
+                    this.applyLoginSuccess(res);
+                }
+                callback(res);
+            });
+        },
+
+        /**
          * Log in using a token
          * @param {string} token Token to log in with
          * @returns {void}
