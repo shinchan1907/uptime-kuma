@@ -1,9 +1,9 @@
 /*
- * Uptime Kuma Server
+ * PulseGuard Server
  * node "server/server.js"
  * DO NOT require("./server") in other modules, it likely creates circular dependency!
  */
-console.log("Welcome to Uptime Kuma");
+console.log("Welcome to PulseGuard Enterprise Monitoring System");
 
 // As the log function need to use dayjs, it should be very top
 const dayjs = require("dayjs");
@@ -28,7 +28,7 @@ const requiredNodeVersionsComma = requiredNodeVersions
     .map((version) => version.trim())
     .join(", ");
 
-// Exit Uptime Kuma immediately if the Node.js version is banned
+// Exit PulseGuard immediately if the Node.js version is banned
 if (semver.satisfies(nodeVersion, bannedNodeVersions)) {
     console.error(
         "\x1b[31m%s\x1b[0m",
@@ -49,7 +49,7 @@ const args = require("args-parser")(process.argv);
 const { sleep, log, getRandomInt, genSecret, isDev } = require("../src/util");
 const config = require("./config");
 
-process.title = "uptime-kuma";
+process.title = "pulseguard";
 
 log.debug("server", "Arguments");
 log.debug("server", args);
