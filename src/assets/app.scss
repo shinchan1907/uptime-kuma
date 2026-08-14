@@ -1147,34 +1147,10 @@ textarea.form-control {
     }
 }
 
-// Settings & Side Navigation Menu Links
-.settings-menu, 
-.settings-sidebar, 
-.settings .list-group,
-.nav-pills.flex-column {
-    .nav-link, .list-group-item, a {
-        color: #94a3b8 !important;
-        background-color: transparent !important;
-        border: none !important;
-        border-radius: 0.75rem !important;
-        padding: 0.75rem 1.25rem !important;
-        font-weight: 500 !important;
-        margin-bottom: 0.25rem !important;
-        transition: all 0.2s ease !important;
-
-        &:hover {
-            color: #ffffff !important;
-            background-color: rgba(255, 255, 255, 0.05) !important;
-        }
-
-        &.active, &.router-link-active {
-            background-color: rgba(16, 185, 129, 0.15) !important;
-            color: #34d399 !important;
-            border-left: 3px solid #10b981 !important;
-            border-radius: 0.75rem !important;
-            font-weight: 600 !important;
-        }
-    }
+// Settings Side Navigation
+.settings-menu {
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding-right: 0.5rem !important;
 }
 
 // System Labels, Muted Help Text & Subtext Contrast

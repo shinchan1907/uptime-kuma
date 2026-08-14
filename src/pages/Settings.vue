@@ -260,59 +260,47 @@ footer {
 .settings-menu {
     a {
         text-decoration: none !important;
+        display: block;
+        color: #94a3b8 !important;
     }
 
     .menu-item {
-        border-radius: 10px;
-        margin: 0.5em;
-        padding: 0.7em 1em;
+        border-radius: 0.75rem !important;
+        margin: 0.25rem 0.5rem !important;
+        padding: 0.75rem 1rem !important;
         cursor: pointer;
-        border-left-width: 0;
-        transition: all ease-in-out 0.1s;
+        font-weight: 500;
+        transition: all 0.2s ease-in-out;
+        color: #94a3b8 !important;
+        border-left: 3px solid transparent;
     }
 
-    .menu-item:hover {
-        background: $highlight-white;
-
-        .dark & {
-            background: $dark-header-bg;
-        }
+    a:hover .menu-item {
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: #ffffff !important;
     }
 
-    .active .menu-item {
-        background: $highlight-white;
-        border-left: 4px solid $primary;
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-
-        .dark & {
-            background: $dark-header-bg;
-        }
+    a.router-link-active .menu-item,
+    a.active .menu-item {
+        background: rgba(16, 185, 129, 0.15) !important;
+        color: #34d399 !important;
+        border-left: 3px solid #10b981 !important;
+        font-weight: 600 !important;
     }
 }
 
 .settings-content {
     .settings-content-header {
-        width: calc(100% + 20px);
-        border-bottom: 1px solid #dee2e6;
-        border-radius: 0 10px 0 0;
-        margin-top: -20px;
-        margin-right: -20px;
-        padding: 12.5px 1em;
-        font-size: 26px;
-
-        .dark & {
-            background: $dark-header-bg;
-            border-bottom: 0;
-        }
-
-        .mobile & {
-            padding: 15px 0 0 0;
-
-            .dark & {
-                background-color: transparent;
-            }
-        }
+        font-size: 22px !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+        padding-bottom: 0.75rem !important;
+        margin-bottom: 1.5rem !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        background: transparent !important;
+        margin-top: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
     }
 }
 
