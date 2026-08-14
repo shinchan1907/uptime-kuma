@@ -25,6 +25,37 @@ function validateIncident(incident) {
 }
 
 /**
+ * Load a status page by slug and enforce tenant ownership.
+ * Platform admins may access any status page; a normal user may only access
+ * pages they own. Throws if the page is missing or not owned.
+ * @param {Socket} socket The authenticated socket (has userID + userRole).
+ * @param {string} slug The status page slug.
+ * @returns {Promise<Bean>} The owned status page bean.
+ * @throws {Error} If not found or access is denied.
+ */
+async function loadOwnedStatusPage(socket, slug) {
+    let statusPage = await R.findOne("status_page", " slug = ? ", [ slug ]);
+    if (!statusPage) {
+        throw new Error("Status Page is not found");
+    }
+    if (socket.userRole !== "admin" && Number(statusPage.user_id) !== Number(socket.userID)) {
+        throw new Error("Access denied");
+    }
+    return statusPage;
+}
+
+/**
+ * Resolve a slug to its status page id, enforcing tenant ownership.
+ * @param {Socket} socket The authenticated socket.
+ * @param {string} slug The status page slug.
+ * @returns {Promise<number>} The owned status page id.
+ * @throws {Error} If not found or access is denied.
+ */
+async function ownedStatusPageID(socket, slug) {
+    return (await loadOwnedStatusPage(socket, slug)).id;
+}
+
+/**
  * Socket handlers for status page
  * @param {Socket} socket Socket.io instance to add listeners on
  * @returns {void}
@@ -35,7 +66,7 @@ module.exports.statusPageSocketHandler = (socket) => {
         try {
             checkLogin(socket);
 
-            let statusPageID = await StatusPage.slugToID(slug);
+            let statusPageID = await ownedStatusPageID(socket, slug);
 
             if (!statusPageID) {
                 throw new Error("slug is not found");
@@ -85,7 +116,7 @@ module.exports.statusPageSocketHandler = (socket) => {
         try {
             checkLogin(socket);
 
-            let statusPageID = await StatusPage.slugToID(slug);
+            let statusPageID = await ownedStatusPageID(socket, slug);
 
             await R.exec("UPDATE incident SET pin = 0 WHERE pin = 1 AND status_page_id = ? ", [statusPageID]);
 
@@ -125,7 +156,7 @@ module.exports.statusPageSocketHandler = (socket) => {
         try {
             checkLogin(socket);
 
-            let statusPageID = await StatusPage.slugToID(slug);
+            let statusPageID = await ownedStatusPageID(socket, slug);
             if (!statusPageID) {
                 callback({
                     ok: false,
@@ -188,7 +219,7 @@ module.exports.statusPageSocketHandler = (socket) => {
         try {
             checkLogin(socket);
 
-            let statusPageID = await StatusPage.slugToID(slug);
+            let statusPageID = await ownedStatusPageID(socket, slug);
             if (!statusPageID) {
                 callback({
                     ok: false,
@@ -228,7 +259,7 @@ module.exports.statusPageSocketHandler = (socket) => {
         try {
             checkLogin(socket);
 
-            let statusPageID = await StatusPage.slugToID(slug);
+            let statusPageID = await ownedStatusPageID(socket, slug);
             if (!statusPageID) {
                 callback({
                     ok: false,
@@ -269,11 +300,7 @@ module.exports.statusPageSocketHandler = (socket) => {
         try {
             checkLogin(socket);
 
-            let statusPage = await R.findOne("status_page", " slug = ? ", [slug]);
-
-            if (!statusPage) {
-                throw new Error("No slug?");
-            }
+            let statusPage = await loadOwnedStatusPage(socket, slug);
 
             callback({
                 ok: true,
@@ -294,13 +321,18 @@ module.exports.statusPageSocketHandler = (socket) => {
             checkLogin(socket);
 
             // Save Config
-            let statusPage = await R.findOne("status_page", " slug = ? ", [slug]);
-
-            if (!statusPage) {
-                throw new Error("No slug?");
-            }
+            let statusPage = await loadOwnedStatusPage(socket, slug);
 
             checkSlug(config.slug);
+
+            // If the slug is being changed, make sure the new one is not taken
+            // by another status page (globally unique public URL).
+            if (config.slug !== statusPage.slug) {
+                let clash = await R.findOne("status_page", " slug = ? ", [ config.slug ]);
+                if (clash) {
+                    throw new Error("This slug is already taken, please choose another");
+                }
+            }
 
             const header = "data:image/png;base64,";
 
@@ -455,12 +487,21 @@ module.exports.statusPageSocketHandler = (socket) => {
 
             checkSlug(slug);
 
+            // Public status page URLs are global, so slugs must be unique across
+            // all tenants. Give a friendly error instead of a raw constraint failure.
+            let existing = await R.findOne("status_page", " slug = ? ", [ slug ]);
+            if (existing) {
+                throw new Error("This slug is already taken, please choose another");
+            }
+
             let statusPage = R.dispense("status_page");
             statusPage.slug = slug;
             statusPage.title = title;
             statusPage.theme = "auto";
             statusPage.icon = "";
             statusPage.autoRefreshInterval = 300;
+            // Own this page so only its creator (or an admin) can manage it.
+            statusPage.user_id = socket.userID;
             await R.store(statusPage);
 
             callback({
@@ -485,7 +526,7 @@ module.exports.statusPageSocketHandler = (socket) => {
         try {
             checkLogin(socket);
 
-            let statusPageID = await StatusPage.slugToID(slug);
+            let statusPageID = await ownedStatusPageID(socket, slug);
 
             if (statusPageID) {
                 // Reset entry page if it is the default one.

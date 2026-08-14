@@ -1415,7 +1415,10 @@ let needSetup = false;
             try {
                 checkLogin(socket);
 
-                const list = await R.findAll("tag");
+                // Tenant scoping: users only see their own tags; admins see all.
+                const list = (socket.userRole === "admin")
+                    ? await R.findAll("tag")
+                    : await R.find("tag", " user_id = ? ", [ socket.userID ]);
 
                 callback({
                     ok: true,
@@ -1436,6 +1439,8 @@ let needSetup = false;
                 let bean = R.dispense("tag");
                 bean.name = tag.name;
                 bean.color = tag.color;
+                // Own this tag so only its creator (or an admin) can use/manage it.
+                bean.user_id = socket.userID;
                 await R.store(bean);
 
                 callback({
@@ -2024,6 +2029,9 @@ async function checkOwner(userID, monitorID) {
  */
 async function afterLogin(socket, user) {
     socket.userID = user.id;
+    // Platform role: "admin" sees everything, "user" is a normal tenant.
+    // Used by socket handlers to scope data per-tenant.
+    socket.userRole = user.role || "user";
     socket.join(user.id);
 
     let monitorList = await server.sendMonitorList(socket);

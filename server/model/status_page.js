@@ -366,7 +366,14 @@ class StatusPage extends BeanModel {
     static async sendStatusPageList(io, socket) {
         let result = {};
 
-        let list = await R.findAll("status_page", " ORDER BY title ");
+        // Multi-tenant scoping: a normal user only sees their own status pages;
+        // a platform admin sees all of them.
+        let list;
+        if (socket.userRole === "admin") {
+            list = await R.findAll("status_page", " ORDER BY title ");
+        } else {
+            list = await R.find("status_page", " user_id = ? ORDER BY title ", [ socket.userID ]);
+        }
 
         for (let item of list) {
             result[item.id] = await item.toJSON();
