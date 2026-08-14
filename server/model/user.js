@@ -33,6 +33,18 @@ class User extends BeanModel {
     }
 
     /**
+     * Stable per-user hash embedded in JWTs so tokens invalidate when the
+     * user's credentials change. Tolerates OTP-only accounts (no password) by
+     * mixing in the email, and stays backward compatible with legacy
+     * password-only tokens when the account has no email yet.
+     * @param {User} user The user.
+     * @returns {string} A short SHAKE256 hash.
+     */
+    static authTokenHash(user) {
+        return shake256((user.password || "") + (user.email || ""), SHAKE256_LENGTH);
+    }
+
+    /**
      * Create a new JWT for a user
      * @param {User} user The User to create a JsonWebToken for
      * @param {string} jwtSecret The key used to sign the JsonWebToken
@@ -41,8 +53,9 @@ class User extends BeanModel {
     static createJWT(user, jwtSecret) {
         return jwt.sign(
             {
+                userID: user.id,
                 username: user.username,
-                h: shake256(user.password, SHAKE256_LENGTH),
+                h: User.authTokenHash(user),
             },
             jwtSecret
         );

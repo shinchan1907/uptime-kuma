@@ -149,6 +149,9 @@ const { loginRateLimiter, twoFaRateLimiter } = require("./rate-limiter");
 const { apiAuth } = require("./auth");
 const { login } = require("./auth");
 const passwordHash = require("./password-hash");
+const validator = require("validator");
+const { isEmailConfigured, sendOtpEmail } = require("./modules/email");
+const { issueOtp, verifyOtp, OTP_EXPIRY_MINUTES } = require("./modules/otp");
 
 const { Prometheus } = require("./prometheus");
 const { UptimeCalculator } = require("./uptime-calculator");
@@ -406,14 +409,21 @@ let needSetup = false;
             try {
                 let decoded = jwt.verify(token, server.jwtSecret);
 
-                log.info("auth", "Username from JWT: " + decoded.username);
+                log.info("auth", "User from JWT: " + (decoded.username || decoded.userID));
 
-                let user = await R.findOne("user", " username = ? AND active = 1 ", [decoded.username]);
+                // Prefer the stable numeric user id (new tokens); fall back to
+                // username lookup for legacy tokens issued before multi-tenant auth.
+                let user;
+                if (decoded.userID) {
+                    user = await R.findOne("user", " id = ? AND active = 1 ", [decoded.userID]);
+                } else {
+                    user = await R.findOne("user", " username = ? AND active = 1 ", [decoded.username]);
+                }
 
                 if (user) {
-                    // Check if the password changed
-                    if (decoded.h !== shake256(user.password, SHAKE256_LENGTH)) {
-                        throw new Error("The token is invalid due to password change or old token");
+                    // Check if the credentials changed (password or email)
+                    if (decoded.h !== User.authTokenHash(user)) {
+                        throw new Error("The token is invalid due to a credential change or old token");
                     }
 
                     log.debug("auth", "afterLogin");
@@ -524,6 +534,193 @@ let needSetup = false;
                     msg: "authIncorrectCreds",
                     msgi18n: true,
                 });
+            }
+        });
+
+        // ***************************
+        // Email + OTP auth (multi-tenant SaaS)
+        // ***************************
+
+        /**
+         * Normalise an email for storage/lookup: trim + lowercase.
+         * @param {string} email Raw email.
+         * @returns {string} Normalised email, or "" if invalid.
+         */
+        const normaliseEmail = (email) => {
+            if (typeof email !== "string" || !validator.isEmail(email.trim())) {
+                return "";
+            }
+            return email.trim().toLowerCase();
+        };
+
+        const registrationEnabled = process.env.DISABLE_REGISTRATION !== "1";
+
+        // Step 1 of sign-up: request a verification code for a new email.
+        socket.on("registerRequestOTP", async (data, callback) => {
+            const clientIP = await server.getClientIP(socket);
+            try {
+                if (typeof callback !== "function") {
+                    return;
+                }
+                if (!registrationEnabled) {
+                    return callback({ ok: false, msg: "Registration is currently disabled" });
+                }
+                if (!(await loginRateLimiter.pass(callback))) {
+                    return;
+                }
+                if (!isEmailConfigured()) {
+                    return callback({ ok: false, msg: "Email delivery is not configured on this server" });
+                }
+
+                const email = normaliseEmail(data?.email);
+                if (!email) {
+                    return callback({ ok: false, msg: "Please enter a valid email address" });
+                }
+
+                // Do not create the account yet; only allow if not already registered.
+                const existing = await R.findOne("user", " email = ? ", [ email ]);
+                if (existing) {
+                    // Avoid leaking which emails exist: nudge to sign in instead.
+                    return callback({ ok: false, msg: "That email is already registered. Please sign in instead." });
+                }
+
+                const { code, expiresMinutes } = await issueOtp(email, "register");
+                await sendOtpEmail({ toAddress: email, code, purpose: "register", expiresMinutes });
+
+                log.info("auth", `Register OTP requested for ${email}. IP=${clientIP}`);
+                callback({ ok: true, expiresMinutes });
+            } catch (error) {
+                loginRateLimiter.removeTokens(1);
+                log.warn("auth", `registerRequestOTP failed: ${error.message}. IP=${clientIP}`);
+                callback({ ok: false, msg: error.code === "OTP_COOLDOWN" ? error.message : "Could not send verification code" });
+            }
+        });
+
+        // Step 2 of sign-up: verify the code and create the account.
+        socket.on("registerVerifyOTP", async (data, callback) => {
+            const clientIP = await server.getClientIP(socket);
+            try {
+                if (typeof callback !== "function") {
+                    return;
+                }
+                if (!registrationEnabled) {
+                    return callback({ ok: false, msg: "Registration is currently disabled" });
+                }
+                if (!(await loginRateLimiter.pass(callback))) {
+                    return;
+                }
+
+                const email = normaliseEmail(data?.email);
+                if (!email) {
+                    return callback({ ok: false, msg: "Please enter a valid email address" });
+                }
+
+                const valid = await verifyOtp(email, "register", String(data?.code || ""));
+                if (!valid) {
+                    loginRateLimiter.removeTokens(1);
+                    return callback({ ok: false, msg: "Invalid or expired code" });
+                }
+
+                // Race guard: another request may have created it in the meantime.
+                let user = await R.findOne("user", " email = ? ", [ email ]);
+                if (!user) {
+                    user = R.dispense("user");
+                    user.username = email;
+                    user.email = email;
+                    user.password = null;
+                    user.role = "user";
+                    user.is_verified = true;
+                    user.active = true;
+                    user.created_date = R.isoDateTime(dayjs.utc());
+                    if (typeof data?.timezone === "string") {
+                        user.timezone = data.timezone;
+                    }
+                    await R.store(user);
+                    log.info("auth", `New account registered: ${email}. IP=${clientIP}`);
+                } else {
+                    user.is_verified = true;
+                    await R.store(user);
+                }
+
+                await afterLogin(socket, user);
+                callback({ ok: true, token: User.createJWT(user, server.jwtSecret) });
+            } catch (error) {
+                loginRateLimiter.removeTokens(1);
+                log.error("auth", `registerVerifyOTP failed: ${error.message}. IP=${clientIP}`);
+                callback({ ok: false, msg: "Could not complete registration" });
+            }
+        });
+
+        // Step 1 of sign-in: request a login code for an existing account.
+        socket.on("loginRequestOTP", async (data, callback) => {
+            const clientIP = await server.getClientIP(socket);
+            try {
+                if (typeof callback !== "function") {
+                    return;
+                }
+                if (!(await loginRateLimiter.pass(callback))) {
+                    return;
+                }
+                if (!isEmailConfigured()) {
+                    return callback({ ok: false, msg: "Email delivery is not configured on this server" });
+                }
+
+                const email = normaliseEmail(data?.email);
+                if (!email) {
+                    return callback({ ok: false, msg: "Please enter a valid email address" });
+                }
+
+                const user = await R.findOne("user", " email = ? AND active = 1 ", [ email ]);
+                // Always report success to avoid leaking which emails are registered.
+                if (user) {
+                    const { code, expiresMinutes } = await issueOtp(email, "login");
+                    await sendOtpEmail({ toAddress: email, code, purpose: "login", expiresMinutes });
+                    log.info("auth", `Login OTP sent to ${email}. IP=${clientIP}`);
+                } else {
+                    log.info("auth", `Login OTP requested for unknown email ${email}. IP=${clientIP}`);
+                }
+                callback({ ok: true, expiresMinutes: OTP_EXPIRY_MINUTES });
+            } catch (error) {
+                loginRateLimiter.removeTokens(1);
+                log.warn("auth", `loginRequestOTP failed: ${error.message}. IP=${clientIP}`);
+                callback({ ok: false, msg: error.code === "OTP_COOLDOWN" ? error.message : "Could not send login code" });
+            }
+        });
+
+        // Step 2 of sign-in: verify the code and log in.
+        socket.on("loginVerifyOTP", async (data, callback) => {
+            const clientIP = await server.getClientIP(socket);
+            try {
+                if (typeof callback !== "function") {
+                    return;
+                }
+                if (!(await loginRateLimiter.pass(callback))) {
+                    return;
+                }
+
+                const email = normaliseEmail(data?.email);
+                if (!email) {
+                    return callback({ ok: false, msg: "Please enter a valid email address" });
+                }
+
+                const valid = await verifyOtp(email, "login", String(data?.code || ""));
+                if (!valid) {
+                    loginRateLimiter.removeTokens(1);
+                    return callback({ ok: false, msg: "Invalid or expired code" });
+                }
+
+                const user = await R.findOne("user", " email = ? AND active = 1 ", [ email ]);
+                if (!user) {
+                    return callback({ ok: false, msg: "Account not found" });
+                }
+
+                await afterLogin(socket, user);
+                log.info("auth", `Successfully logged in ${email} via OTP. IP=${clientIP}`);
+                callback({ ok: true, token: User.createJWT(user, server.jwtSecret) });
+            } catch (error) {
+                loginRateLimiter.removeTokens(1);
+                log.error("auth", `loginVerifyOTP failed: ${error.message}. IP=${clientIP}`);
+                callback({ ok: false, msg: "Could not complete sign-in" });
             }
         });
 
