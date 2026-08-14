@@ -1026,3 +1026,25 @@ header {
     }
 }
 
+// Search Input and Filter Controls
+.search-wrapper {
+    .search-input {
+        background-color: rgba(30, 41, 59, 0.6) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 25px !important;
+        padding-left: 1rem !important;
+
+        &::placeholder {
+            color: #94a3b8 !important;
+            opacity: 1 !important;
+        }
+
+        &:focus {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.2) !important;
+        }
+    }
+}
+
+
